@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<!-- Spanish version — Guía de MyTechPix de KEC. Translated from the live English guide (mytechpix-guide-for-techs.netlify.app). Narration uses on-device Spanish speech (es-MX); the bundled English MP3 recording is not used. -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Guía de MyTechPix de KEC</title>
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MyTechPix ES">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #080808; color: #fff;
+    height: 100vh; width: 100vw; overflow: hidden; position: fixed; top: 0; left: 0;
+  }
+  #progress-bar {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: linear-gradient(90deg, #0066ff, #00ffaa);
+    transition: width 0.35s ease; z-index: 200; border-radius: 0 2px 2px 0;
+  }
+  #topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 54px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; z-index: 150; padding-top: 3px;
+  }
+  #tts-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: #ccc; padding: 8px 20px; border-radius: 30px;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  #tts-btn.speaking { background: rgba(0,150,255,0.2); border-color: #0099ff; color: #0099ff; }
+  #auto-btn {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    color: #555; padding: 8px 16px; border-radius: 30px;
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  #auto-btn.on { background: rgba(0,200,100,0.15); border-color: #00cc66; color: #00cc66; }
+  #lang-toggle {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    color: #8ab4ff; padding: 8px 14px; border-radius: 30px;
+    font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap;
+  }
+  #slide-counter { position: fixed; top: 18px; right: 16px; font-size: 11px; color: #444; z-index: 150; font-weight: 700; }
+
+  #countdown-wrap {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    z-index: 160; display: none; flex-direction: column; align-items: center; gap: 4px;
+  }
+  #countdown-wrap.visible { display: flex; }
+  #countdown-ring { position: relative; width: 36px; height: 36px; }
+  #countdown-svg { transform: rotate(-90deg); }
+  #countdown-circle { fill: none; stroke: #0099ff; stroke-width: 3; stroke-dasharray: 94; stroke-dashoffset: 94; stroke-linecap: round; }
+  #countdown-num { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 13px; font-weight: 800; color: #0099ff; }
+  #countdown-label { font-size: 10px; color: #333; letter-spacing: 1px; text-transform: uppercase; }
+
+  #slides-container { position: fixed; top: 54px; bottom: 70px; left: 0; right: 0; overflow: hidden; }
+
+  .slide {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 24px 28px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    transform: translateX(100%); opacity: 0; visibility: hidden;
+    transition: none; will-change: transform, opacity; z-index: 1;
+  }
+  .slide.is-active { transform: translateX(0); opacity: 1; visibility: visible; z-index: 10; }
+  .slide.enter-from-right { transform: translateX(100%); opacity: 0; visibility: visible; z-index: 9; transition: transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease; }
+  .slide.enter-from-right.animating { transform: translateX(0); opacity: 1; }
+  .slide.enter-from-left { transform: translateX(-100%); opacity: 0; visibility: visible; z-index: 9; transition: transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease; }
+  .slide.enter-from-left.animating { transform: translateX(0); opacity: 1; }
+  .slide.exit-to-left { transform: translateX(0); opacity: 1; visibility: visible; z-index: 8; transition: transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease; }
+  .slide.exit-to-left.animating { transform: translateX(-100%); opacity: 0; }
+  .slide.exit-to-right { transform: translateX(0); opacity: 1; visibility: visible; z-index: 8; transition: transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease; }
+  .slide.exit-to-right.animating { transform: translateX(100%); opacity: 0; }
+
+  .w { display: inline; border-radius: 3px; padding: 0 1px; }
+  .w.lit { background: #0055ff; color: #fff !important; -webkit-text-fill-color: #fff !important; border-radius: 4px; }
+
+  .t-launch  { background: radial-gradient(ellipse at 50% 35%, #0b1f40 0%, #04080f 100%); }
+  .t-dark    { background: linear-gradient(160deg, #0a0a16 0%, #10101e 100%); }
+  .t-blue    { background: linear-gradient(160deg, #03101f 0%, #051828 100%); }
+  .t-green   { background: linear-gradient(160deg, #031208 0%, #04180a 100%); }
+  .t-red     { background: linear-gradient(160deg, #180305 0%, #220407 100%); }
+  .t-neutral { background: linear-gradient(160deg, #0c0c0c 0%, #141414 100%); }
+  .t-warn    { background: linear-gradient(160deg, #1a1200 0%, #241900 100%); }
+
+  .slide-tag { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: #444; margin-bottom: 10px; text-align: center; width: 100%; }
+  .slide-title { font-size: 25px; font-weight: 800; text-align: center; line-height: 1.2; margin-bottom: 14px; color: #fff; width: 100%; }
+  .hero-logo { font-size: 10px; font-weight: 700; letter-spacing: 3.5px; color: #2a3a50; text-transform: uppercase; margin-bottom: 18px; }
+  .hero-title {
+    font-size: 46px; font-weight: 900; text-align: center; line-height: 1.0;
+    background: linear-gradient(135deg, #ffffff 0%, #77bbff 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 12px;
+  }
+  .hero-sub { font-size: 13px; color: #3a5070; text-align: center; line-height: 1.8; margin-bottom: 40px; }
+  .start-btn {
+    background: linear-gradient(135deg, #0044cc, #0088ff); color: #fff; border: none;
+    padding: 18px 56px; border-radius: 50px; font-size: 18px; font-weight: 900;
+    cursor: pointer; letter-spacing: 2px; box-shadow: 0 8px 30px rgba(0,80,220,0.4); transition: all 0.2s;
+  }
+  .start-btn:active { transform: scale(0.96); }
+
+  .rule-block { width: 100%; max-width: 480px; background: rgba(255,255,255,0.03); border-left: 4px solid #222; border-radius: 10px; padding: 13px 16px; margin: 5px 0; }
+  .rule-block.blue  { border-left-color: #0055ee; }
+  .rule-block.green { border-left-color: #009944; }
+  .rule-block.red   { border-left-color: #bb1111; }
+  .rule-num { font-size: 28px; font-weight: 900; line-height: 1; margin-bottom: 3px; }
+  .rule-block.blue  .rule-num { color: #3388ff; }
+  .rule-block.green .rule-num { color: #22bb55; }
+  .rule-block.red   .rule-num { color: #ff4444; }
+  .rule-block p { font-size: 14px; color: #999; line-height: 1.5; }
+  .rule-block strong { color: #eee; }
+
+  .badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; }
+  .badge.blue  { background: rgba(0,80,220,0.12); color: #3388ff; border: 1px solid rgba(0,80,220,0.35); }
+  .badge.green { background: rgba(0,150,60,0.12); color: #22bb55; border: 1px solid rgba(0,150,60,0.35); }
+  .badge.red   { background: rgba(180,20,20,0.12); color: #ff4444; border: 1px solid rgba(180,20,20,0.35); }
+  .badge.warn  { background: rgba(200,140,0,0.12); color: #ffaa00; border: 1px solid rgba(200,140,0,0.35); }
+
+  .slide-list { width: 100%; max-width: 480px; list-style: none; }
+  .slide-list li { padding: 8px 0 8px 20px; position: relative; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 14px; color: #aaa; line-height: 1.45; }
+  .slide-list li::before { content: '›'; position: absolute; left: 2px; color: #0055ee; font-size: 16px; font-weight: 700; top: 7px; }
+  .slide-list li strong { color: #ddd; }
+
+  .check-list { width: 100%; max-width: 480px; }
+  .check-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 14px; color: #aaa; line-height: 1.4; }
+  .check-box { width: 24px; height: 24px; border: 2px solid #2a2a2a; border-radius: 7px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .check-box.checked { background: #009944; border-color: #009944; }
+  .check-box.checked::after { content: '✓'; font-size: 14px; color: #fff; font-weight: 800; }
+
+  .status-item { width: 100%; max-width: 480px; display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .sdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .sdot.blue { background: #0066ff; } .sdot.green { background: #00aa44; }
+  .sdot.yellow { background: #ffaa00; } .sdot.gray { background: #444; } .sdot.red { background: #cc2222; }
+  .s-label { font-size: 13px; font-weight: 700; color: #ddd; }
+  .s-desc { font-size: 12px; color: #666; margin-top: 2px; }
+
+  .info-box { width: 100%; max-width: 480px; border-radius: 12px; padding: 15px 18px; margin-top: 12px; }
+  .info-box.green { background: rgba(0,150,60,0.08); border: 1px solid rgba(0,150,60,0.2); }
+  .info-box.red   { background: rgba(180,20,20,0.08); border: 1px solid rgba(180,20,20,0.2); }
+  .info-box p { font-size: 14px; color: #999; line-height: 1.6; text-align: center; }
+  .info-box strong { color: #eee; }
+
+  .verify-box { width: 100%; max-width: 480px; background: rgba(200,140,0,0.06); border: 1px solid rgba(200,140,0,0.2); border-radius: 14px; padding: 20px; margin-top: 10px; }
+  .verify-box p { font-size: 15px; color: #bbb; line-height: 1.7; }
+  .verify-box strong { color: #fff; }
+
+  .dont-box { width: 100%; max-width: 480px; background: rgba(180,20,20,0.06); border: 1px solid rgba(180,20,20,0.2); border-radius: 10px; padding: 13px 16px; margin-top: 12px; }
+  .dont-label { font-size: 11px; color: #ff4444; font-weight: 800; letter-spacing: 1px; margin-bottom: 6px; }
+  .dont-box p { font-size: 13px; color: #888; line-height: 1.6; }
+
+  .quote-box { background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid rgba(255,255,255,0.07); padding: 26px 22px; max-width: 420px; text-align: center; margin-top: 14px; }
+  .quote-box p { font-size: 17px; line-height: 1.7; color: #aaa; font-style: italic; }
+
+  .quiz-options { width: 100%; max-width: 480px; margin-top: 6px; }
+  .quiz-option {
+    display: block; width: 100%; text-align: left;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
+    color: #bbb; padding: 13px 16px; border-radius: 10px;
+    font-size: 14px; font-weight: 600; font-family: inherit; line-height: 1.4;
+    cursor: pointer; margin: 5px 0; transition: all 0.15s;
+  }
+  .quiz-option:active { transform: scale(0.98); }
+  .quiz-option:disabled { cursor: default; }
+  .quiz-option.correct { background: rgba(0,150,60,0.15); border-color: #00aa44; color: #22bb55; }
+  .quiz-option.wrong   { background: rgba(180,20,20,0.15); border-color: #cc2222; color: #ff5555; }
+  .quiz-feedback { margin-top: 12px; font-size: 14px; font-weight: 700; text-align: center; min-height: 20px; }
+  .quiz-feedback.good { color: #22bb55; }
+  .quiz-feedback.bad  { color: #ff4444; }
+
+  #results-content { display: flex; flex-direction: column; align-items: center; width: 100%; }
+  #pass-mark { width: 110px; height: 110px; margin-bottom: 18px; }
+  #pass-mark circle {
+    fill: none; stroke: #00cc66; stroke-width: 4; stroke-linecap: round;
+    stroke-dasharray: 302; stroke-dashoffset: 302;
+    animation: draw-ring 0.8s ease forwards;
+  }
+  #pass-mark path {
+    fill: none; stroke: #00cc66; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 70; stroke-dashoffset: 70;
+    animation: draw-check 0.5s ease 0.75s forwards;
+  }
+  @keyframes draw-ring  { to { stroke-dashoffset: 0; } }
+  @keyframes draw-check { to { stroke-dashoffset: 0; } }
+  .confetti {
+    position: fixed; top: -20px; width: 8px; height: 14px;
+    border-radius: 2px; z-index: 140; pointer-events: none; opacity: 0.95;
+    animation: confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0.85; } }
+
+  #nav {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 70px;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 20px; background: rgba(6,6,6,0.94);
+    backdrop-filter: blur(14px); border-top: 1px solid rgba(255,255,255,0.05); z-index: 150;
+  }
+  .nav-btn { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); color: #bbb; padding: 11px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+  .nav-btn:active { transform: scale(0.95); }
+  .nav-btn:disabled { opacity: 0.15; pointer-events: none; }
+  .nav-btn.primary { background: linear-gradient(135deg, #0044cc, #0088ff); border: none; color: #fff; box-shadow: 0 4px 18px rgba(0,80,200,0.35); }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+<div id="topbar">
+  <button id="tts-btn" onclick="toggleTTS()">🎧 Escuchar · ▶️ Reproducir</button>
+  <audio id="guide-voice" preload="auto" playsinline src="kec-mytechpix-voice.mp3"></audio>
+  <button id="auto-btn" onclick="toggleAuto()">⏭ Auto: No</button>
+  <a id="lang-toggle" href="https://mytechpix-guide-for-techs.netlify.app/">English</a>
+</div>
+<div id="slide-counter"></div>
+
+<div id="countdown-wrap">
+  <div id="countdown-ring">
+    <svg id="countdown-svg" width="36" height="36" viewBox="0 0 36 36">
+      <circle cx="18" cy="18" r="15" fill="none" stroke="#1a1a1a" stroke-width="3"/>
+      <circle id="countdown-circle" cx="18" cy="18" r="15"/>
+    </svg>
+    <div id="countdown-num">4</div>
+  </div>
+  <div id="countdown-label">Siguiente diapositiva</div>
+</div>
+
+<div id="slides-container">
+
+  <!-- 0: LAUNCH -->
+  <div class="slide t-launch is-active" data-index="0">
+    <div class="hero-logo">KEC Field Technology</div>
+    <div class="hero-title">MyTechPix<br>Guía rápida</div>
+    <div class="hero-sub">Qué capturar · Cuándo capturarlo · Cómo evitar bloqueos de QA</div>
+    <button class="start-btn" onclick="unlockGuideAudio();goTo(1)">▶ EMPEZAR</button>
+  </div>
+
+  <!-- 1: 3 RULES -->
+  <div class="slide t-dark" data-index="1">
+    <div class="slide-tag">Sección 1 · La base</div>
+    <div class="slide-title">Las 3 únicas cosas que importan</div>
+    <div class="rule-block blue"><div class="rule-num">1</div><p><strong>Azul (Blue) antes de limpiar.</strong> Documenta todo ANTES de tocarlo.</p></div>
+    <div class="rule-block green"><div class="rule-num">2</div><p><strong>Verde (Green) después de terminar.</strong> Documenta todo DESPUÉS de que esté limpio.</p></div>
+    <div class="rule-block red"><div class="rule-num">3</div><p><strong>Rojo (Red) solo si hay un problema.</strong> Si falta azul o verde, no puedes cerrar el trabajo.</p></div>
+  </div>
+
+  <!-- 2: JOB STATUS -->
+  <div class="slide t-blue" data-index="2">
+    <div class="slide-tag">Sección 2 · Códigos de estado</div>
+    <div class="slide-title">Estado del trabajo — Qué significa</div>
+    <div class="status-item"><div class="sdot gray"></div><div><div class="s-label">En camino (On the Way).</div><div class="s-desc">Manejando. Sin trabajo. Sin fotos.</div></div></div>
+    <div class="status-item"><div class="sdot yellow"></div><div><div class="s-label">En el sitio (Arrived Onsite).</div><div class="s-desc">Ya estás ahí. Todavía no empieces.</div></div></div>
+    <div class="status-item"><div class="sdot red"></div><div><div class="s-label">Esperando acceso (Waiting on Access).</div><div class="s-desc">No puedes empezar. Usa los comentarios. Foto amplia si no puedes entrar.</div></div></div>
+    <div class="status-item"><div class="sdot blue"></div><div><div class="s-label">Entrada (Check In). El trabajo empieza aquí.</div><div class="s-desc">Toma la documentación Azul. Llama a la oficina.</div></div></div>
+    <div class="status-item"><div class="sdot green"></div><div><div class="s-label">Salida (Check Out). El trabajo termina aquí.</div><div class="s-desc">Limpieza terminada. Documentación Verde. Metadatos completos. Haz la salida con la torre de control ANTES de cerrar el local y activar la alarma.</div></div></div>
+    <div class="status-item"><div class="sdot gray"></div><div><div class="s-label">Revisión del SM (Needs SM Review).</div><div class="s-desc">Después de la salida, termina de prepararte para salir del sitio, luego cambia el estado de Salida (Check Out) a Revisión del SM (Needs SM Review). QA toma el control.</div></div></div>
+  </div>
+
+  <!-- 3: BLUE KITCHEN -->
+  <div class="slide t-blue" data-index="3">
+    <div class="slide-tag">Sección 3 · Antes de limpiar</div>
+    <div class="slide-title">Azul (Blue) — Cocina y campana</div>
+    <div class="badge blue">Antes de limpiar</div>
+    <ul class="slide-list">
+      <li>Video del recorrido de la campana.</li>
+      <li>Video de las luces piloto. Las llamas deben verse.</li>
+      <li>Etiqueta de la estación de alarma contra incendios. Frente y reverso.</li>
+      <li>Vista amplia de los equipos bajo la campana.</li>
+      <li>Video lento de la línea de equipos. De izquierda a derecha, a unos 5 pies de distancia.</li>
+      <li>Campana con los filtros PUESTOS.</li>
+      <li>Campana con los filtros QUITADOS.</li>
+      <li>Rieles superiores e inferiores.</li>
+      <li>Pleno y línea de detección. Toma amplia.</li>
+      <li>Salpicadero y detrás de los equipos.</li>
+      <li>Área de trabajo y rejillas de retorno.</li>
+      <li>Todos los collares del ducto.</li>
+    </ul>
+  </div>
+
+  <!-- 4: BLUE DUCT -->
+  <div class="slide t-blue" data-index="4">
+    <div class="slide-tag">Sección 3 · Antes de limpiar</div>
+    <div class="slide-title">Azul (Blue) — Ducto y paneles de acceso</div>
+    <div class="badge blue">Antes de limpiar</div>
+    <ul class="slide-list">
+      <li>Vista general del ducto.</li>
+      <li>Ubicación de cada panel.</li>
+      <li>Panel PUESTO. La calcomanía debe verse.</li>
+      <li>Panel QUITADO. Afuera del hueco.</li>
+      <li>Vista hacia la campana.</li>
+      <li>Vista hacia el ducto vertical.</li>
+      <li>Estado del aislamiento contra incendios (fire wrap).</li>
+    </ul>
+    <div class="info-box red" style="margin-top:14px;">
+      <p><strong>¿No hay panel?</strong> Marca N/A – Not Present. Nunca lo dejes en blanco. Nunca adivines. Es lo que más revisan en auditoría.</p>
+    </div>
+  </div>
+
+  <!-- 5: BLUE ROOFTOP -->
+  <div class="slide t-blue" data-index="5">
+    <div class="slide-tag">Sección 3 · Antes de limpiar</div>
+    <div class="slide-title">Azul (Blue) — Azotea y ventilador</div>
+    <div class="badge blue">Antes de limpiar</div>
+    <ul class="slide-list">
+      <li>Ventilador y posición del interruptor.</li>
+      <li>Aspas del ventilador. Todos los lados. Ventilador apagado.</li>
+      <li>Video del ventilador funcionando.</li>
+      <li>Tazón y depósito del ventilador.</li>
+      <li>Video de la bandeja recolectora.</li>
+      <li>Ruta del drenaje. A unos 5 pies.</li>
+      <li>Ducto vertical hacia abajo.</li>
+      <li>Área amplia de la azotea.</li>
+      <li>Video del ventilador en 360 grados.</li>
+    </ul>
+  </div>
+
+  <!-- 6: GREEN -->
+  <div class="slide t-green" data-index="6">
+    <div class="slide-tag">Sección 4 · Después de limpiar</div>
+    <div class="slide-title">Verde (Green) — Las mismas áreas. En condición limpia.</div>
+    <div class="badge green">Después de limpiar</div>
+    <div class="rule-block green" style="margin-top:10px;"><p style="font-size:15px;">Todo lo que tomaste en Azul debe verificarse en Verde.</p></div>
+    <div class="info-box green" style="margin-top:14px;"><p style="font-size:16px;font-style:italic;">Si QA no lo ve limpio, no cuenta.</p></div>
+  </div>
+
+  <!-- 7: VIDEO TECHNIQUE -->
+  <div class="slide t-neutral" data-index="7">
+    <div class="slide-tag">Sección 5 · Técnica</div>
+    <div class="slide-title">Cómo grabar video</div>
+    <div style="font-size:11px;color:#444;margin-bottom:14px;text-align:center;letter-spacing:1px;text-transform:uppercase;">Evita el 80 por ciento de los fallos de QA</div>
+    <ul class="slide-list">
+      <li>Aléjate lo suficiente para ver toda el área.</li>
+      <li>Muévete lento y con firmeza.</li>
+      <li>Una sola toma continua. No pares y vuelvas a empezar.</li>
+      <li>Haz una pausa de 2 a 3 segundos en las áreas importantes.</li>
+    </ul>
+    <div class="dont-box">
+      <div class="dont-label">NUNCA HAGAS ESTO</div>
+      <p>No uses el zoom. No saltes entre secciones. No grabes demasiado cerca. Si no ves el componente completo, estás demasiado cerca.</p>
+    </div>
+  </div>
+
+  <!-- 8: PRO TIP — GREASE REMOVAL -->
+  <div class="slide t-warn" data-index="8">
+    <div class="slide-tag">Sección 5 · Consejo clave</div>
+    <div class="slide-title">Quitar la grasa. Dato clave.</div>
+    <div class="badge warn">Importante</div>
+    <div class="verify-box">
+      <p>La grasa pesada acumulada se disuelve con <strong>agua caliente y desengrasante</strong>. El agua fría hace que la grasa se solidifique y se vuelva a pegar a las superficies, y te hace el trabajo más difícil. Aplica desengrasante, déjalo actuar y enjuaga con agua caliente de arriba hacia abajo.</p>
+    </div>
+  </div>
+
+  <!-- 9: RED -->
+  <div class="slide t-red" data-index="9">
+    <div class="slide-tag">Sección 6 · Deficiencias</div>
+    <div class="slide-title">Rojo (Red) — Cuándo usarlo</div>
+    <div class="badge red">Solo problemas</div>
+    <ul class="slide-list" style="margin-top:10px;">
+      <li>No pudiste llegar a algo.</li>
+      <li>Algo está dañado.</li>
+      <li>Falta algo.</li>
+      <li>El aislamiento contra incendios (fire wrap) se ve dañado.</li>
+      <li>El acceso está bloqueado.</li>
+    </ul>
+    <div class="rule-block red" style="margin-top:14px;"><p>Rojo debe corresponder a un problema real. Rojo debe ser claro. Rojo no es un fracaso. Ocultarlo sí lo es.</p></div>
+  </div>
+
+  <!-- 10: METADATA -->
+  <div class="slide t-dark" data-index="10">
+    <div class="slide-tag">Sección 8 · Salida</div>
+    <div class="slide-title">Metadatos necesarios para la salida</div>
+    <div style="font-size:13px;color:#555;margin-bottom:14px;text-align:center;">Confirma todo antes de la salida</div>
+    <div class="check-list">
+      <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><span>Tipo de sistema.</span></div>
+      <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><span>Orientación del ducto.</span></div>
+      <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><span>Tipo de ventilador.</span></div>
+      <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><span>Número de pisos.</span></div>
+      <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><span>Estado de los paneles de acceso.</span></div>
+    </div>
+    <div style="margin-top:14px;font-size:13px;color:#cc2222;text-align:center;font-weight:700;">Si faltan metadatos, la salida queda bloqueada. Sin excepciones.</div>
+  </div>
+
+  <!-- 11: ACCESS PANEL RULE -->
+  <div class="slide t-warn" data-index="11">
+    <div class="slide-tag">Sección 8 · Recordatorio importante</div>
+    <div class="slide-title">Regla del panel de acceso.</div>
+    <div class="badge warn">Recordatorio</div>
+    <div class="verify-box">
+      <p>Si no existe un panel en el sitio, márcalo <strong>N/A – Not Present</strong>. Nunca dejes el campo en blanco. Nunca adivines. Un campo en blanco o adivinado es una alerta automática de QA. Es lo que más revisan en el trabajo.</p>
+    </div>
+  </div>
+
+  <!-- 12: QA BLOCKS -->
+  <div class="slide t-dark" data-index="12">
+    <div class="slide-tag">Sección 9 · Ojo</div>
+    <div class="slide-title">Bloqueos comunes de QA</div>
+    <div style="font-size:11px;color:#444;text-align:center;margin-bottom:14px;letter-spacing:1px;text-transform:uppercase;">Evita esto en cada trabajo</div>
+    <ul class="slide-list">
+      <li>Falta el video de las luces piloto.</li>
+      <li>No se mostró el pleno con los filtros fuera.</li>
+      <li>Video de los equipos demasiado cerca.</li>
+      <li>Panel no mostrado o sin marcar N/A.</li>
+      <li>Problema en Rojo subido sin explicación.</li>
+      <li>Fotos en el lugar equivocado. Antes o después.</li>
+    </ul>
+  </div>
+
+  <!-- 13: SELF CHECK -->
+  <div class="slide t-blue" data-index="13">
+    <div class="slide-tag">Sección 11 · Antes de salir</div>
+    <div class="slide-title">Revisión rápida antes de la salida</div>
+    <div class="check-list">
+      <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><span>¿Tomé las fotos de Azul antes de limpiar?</span></div>
+      <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><span>¿Verifiqué cada área de Azul en Verde?</span></div>
+      <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><span>¿Marqué los límites de acceso claramente?</span></div>
+      <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><span>¿Completé todos los metadatos?</span></div>
+      <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><span>¿Usé Rojo solo donde era necesario?</span></div>
+      <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><span>¿Hice la salida con la torre de control ANTES de cerrar el local y activar la alarma?</span></div>
+      <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><span>¿Cambié el estado de Salida (Check Out) a Revisión del SM (Needs SM Review) antes de salir?</span></div>
+    </div>
+    <div style="margin-top:16px;font-size:14px;color:#22bb55;text-align:center;font-weight:700;">Si todo es sí, terminaste y la salida va a pasar.</div>
+  </div>
+
+  <!-- 14: FINAL -->
+  <div class="slide t-neutral" data-index="14">
+    <div class="slide-tag">El estándar</div>
+    <div class="hero-title" style="font-size:34px;margin-bottom:8px;">La regla final</div>
+    <div class="quote-box">
+      <p>Si QA puede recrear el trabajo con tus fotos y videos, lo hiciste bien. Ese es el estándar.</p>
+    </div>
+    <div style="margin-top:32px;font-size:10px;color:#222;text-align:center;letter-spacing:2px;text-transform:uppercase;">KEC Field Technology · Guía de MyTechPix</div>
+  </div>
+
+  <!-- 15: QUIZ Q1 -->
+  <div class="slide t-dark" data-index="15" data-quiz="0">
+    <div class="slide-tag">Prueba · Pregunta 1 de 5</div>
+    <div class="slide-title">¿Qué significa una foto marcada en ROJO?</div>
+    <div class="quiz-options">
+      <button class="quiz-option" onclick="answerQuiz(this)">El trabajo está completo y listo para publicar.</button>
+      <button class="quiz-option" data-correct="1" onclick="answerQuiz(this)">Hay una deficiencia que debe documentarse en un punto de la lista de verificación.</button>
+      <button class="quiz-option" onclick="answerQuiz(this)">Es una foto de antes de limpiar.</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <!-- 16: QUIZ Q2 -->
+  <div class="slide t-dark" data-index="16" data-quiz="1">
+    <div class="slide-tag">Prueba · Pregunta 2 de 5</div>
+    <div class="slide-title">¿Qué funciona mejor con la grasa pesada acumulada?</div>
+    <div class="quiz-options">
+      <button class="quiz-option" onclick="answerQuiz(this)">Solo agua fría. Evita que la grasa se extienda.</button>
+      <button class="quiz-option" onclick="answerQuiz(this)">Limpiar en seco. El agua lo empeora.</button>
+      <button class="quiz-option" data-correct="1" onclick="answerQuiz(this)">Desengrasante con tiempo de acción, luego enjuague con agua caliente de arriba hacia abajo.</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <!-- 17: QUIZ Q3 -->
+  <div class="slide t-dark" data-index="17" data-quiz="2">
+    <div class="slide-tag">Prueba · Pregunta 3 de 5</div>
+    <div class="slide-title">No hay panel de acceso 3 en el sitio. ¿Qué haces?</div>
+    <div class="quiz-options">
+      <button class="quiz-option" data-correct="1" onclick="answerQuiz(this)">Márcalo N/A – Not Present.</button>
+      <button class="quiz-option" onclick="answerQuiz(this)">Deja el campo en blanco y que QA lo resuelva.</button>
+      <button class="quiz-option" onclick="answerQuiz(this)">Adivina lo mejor que puedas. Algo es mejor que nada.</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <!-- 18: QUIZ Q4 -->
+  <div class="slide t-dark" data-index="18" data-quiz="3">
+    <div class="slide-tag">Prueba · Pregunta 4 de 5</div>
+    <div class="slide-title">¿Cuándo TERMINAS en la salida?</div>
+    <div class="quiz-options">
+      <button class="quiz-option" onclick="answerQuiz(this)">Después de cerrar el local. Llama a la torre de control luego, desde la camioneta.</button>
+      <button class="quiz-option" data-correct="1" onclick="answerQuiz(this)">Después de hacer la salida con la torre de control, ANTES de cerrar el local y activar la alarma.</button>
+      <button class="quiz-option" onclick="answerQuiz(this)">Una vez activada la alarma. No hace falta llamar.</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <!-- 19: QUIZ Q5 -->
+  <div class="slide t-dark" data-index="19" data-quiz="4">
+    <div class="slide-tag">Prueba · Pregunta 5 de 5</div>
+    <div class="slide-title">Después de la salida, ¿qué estado pones antes de salir del sitio?</div>
+    <div class="quiz-options">
+      <button class="quiz-option" onclick="answerQuiz(this)">En camino (On the Way).</button>
+      <button class="quiz-option" onclick="answerQuiz(this)">Esperando acceso (Waiting on Access).</button>
+      <button class="quiz-option" data-correct="1" onclick="answerQuiz(this)">Revisión del SM (Needs SM Review). Se cambia desde Salida (Check Out) cuando ya estás listo para salir.</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <!-- 20: QUIZ RESULTS -->
+  <div class="slide t-launch" data-index="20" id="results-slide">
+    <div class="slide-tag">Prueba · Resultados</div>
+    <div id="results-content"></div>
+  </div>
+
+</div>
+
+<div id="nav">
+  <button class="nav-btn" id="prev-btn" onclick="prevSlide()" disabled>← Atrás</button>
+  <button class="nav-btn primary" id="next-btn" onclick="nextSlide()">Siguiente →</button>
+</div>
+
+<script>
+const TOTAL = 21;
+const QUIZ_COUNT = 5, PASS_SCORE = 4, FIRST_QUIZ_INDEX = 15, RESULTS_INDEX = 20;
+const QUIZ_TOPICS = [
+  'Contorno rojo = deficiencia en un punto de la lista de verificación',
+  'Quitar la grasa: desengrasante + enjuague con agua caliente',
+  'Paneles de acceso: marca N/A – Not Present, nunca en blanco, nunca adivines',
+  'Orden de salida: torre de control ANTES de cerrar y activar la alarma',
+  'Estado final antes de salir: Needs SM Review'
+];
+let quizState = new Array(QUIZ_COUNT);
+let cur = 0, ttsOn = false, autoOn = false, isAnimating = false;
+let countdownInterval = null, slideWordSpans = [];
+let voiceCache = null, voiceReady = false;
+
+// ── WORD WRAPPING ──────────────────────────────────────────────
+function wrapWords(el) {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const p = node.parentElement;
+      if (!p) return NodeFilter.FILTER_REJECT;
+      const tag = p.tagName;
+      if (['SCRIPT','STYLE','BUTTON'].includes(tag)) return NodeFilter.FILTER_REJECT;
+      if (p.classList.contains('slide-tag') || p.classList.contains('hero-logo') || p.classList.contains('dont-label') || p.classList.contains('countdown-label')) return NodeFilter.FILTER_REJECT;
+      return node.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+    }
+  });
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(node => {
+    const parts = node.textContent.split(/(\s+)/);
+    const frag = document.createDocumentFragment();
+    parts.forEach(part => {
+      if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); }
+      else if (part) { const s = document.createElement('span'); s.className = 'w'; s.textContent = part; frag.appendChild(s); }
+    });
+    node.parentNode.replaceChild(frag, node);
+  });
+}
+
+function initAllSlides() {
+  document.querySelectorAll('.slide').forEach(s => { if (!s.dataset.wrapped) { wrapWords(s); s.dataset.wrapped = '1'; } });
+}
+
+function getActiveWordSpans() {
+  const a = document.querySelector('.slide.is-active');
+  return a ? Array.from(a.querySelectorAll('.w')) : [];
+}
+
+function clearHighlights() { document.querySelectorAll('.w.lit').forEach(w => w.classList.remove('lit')); }
+
+// ── BUILD TTS TEXT WITH PAUSES ─────────────────────────────────
+// Groups spans by block parent, adds period between blocks for natural pauses
+function buildTTSText(spans) {
+  if (!spans.length) return '';
+  let result = '';
+  let lastBlock = null;
+  const BLOCK_TAGS = ['LI','P','DIV','H1','H2','H3','SPAN'];
+
+  spans.forEach(span => {
+    // Find nearest block ancestor
+    let block = span.parentElement;
+    while (block && block.className !== 'slide') {
+      if (['LI','P'].includes(block.tagName)) break;
+      block = block.parentElement;
+    }
+
+    if (lastBlock && block !== lastBlock) {
+      // Crossing a block boundary — add period if not already punctuated
+      if (result && !/[.!?,]$/.test(result.trimEnd())) {
+        result = result.trimEnd() + '. ';
+      } else {
+        result = result.trimEnd() + ' ';
+      }
+    } else if (result) {
+      result += ' ';
+    }
+
+    result += span.textContent;
+    lastBlock = block;
+  });
+
+  return result.trim();
+}
+
+// ── TTS PACING (Nov 25 fix) ────────────────────────────────────
+// The reader used to speak a whole slide as ONE utterance at rate
+// 0.88, so sentences ran together with no pause. Now each block
+// (title, bullet, paragraph) is its own utterance at rate 0.75,
+// with a real 600 ms silence between blocks. Highlights keep
+// working: each segment knows the word-span index it starts at.
+const TTS_RATE = 0.75;
+const TTS_PAUSE_MS = 600;
+let ttsToken = 0;
+function buildTTSSegments(spans) {
+  const segs = [];
+  let cur = null;
+  spans.forEach((span, i) => {
+    let block = span.parentElement;
+    while (block && block.className !== 'slide') {
+      if (['LI','P'].includes(block.tagName)) break;
+      block = block.parentElement;
+    }
+    if (!cur || cur.block !== block) {
+      cur = { block: block, words: [], start: i };
+      segs.push(cur);
+    }
+    cur.words.push(span.textContent);
+  });
+  return segs.map(g => {
+    let t = g.words.join(' ').trim();
+    if (t && !/[.!?]$/.test(t)) t += '.';
+    return { text: t, start: g.start };
+  }).filter(g => g.text.length > 0);
+}
+function speakSegments(segs, idx, token) {
+  if (token !== ttsToken || !ttsOn) return;
+  if (idx >= segs.length) {
+    document.getElementById('tts-btn').classList.remove('speaking');
+    clearHighlights();
+    if (autoOn && cur < TOTAL - 1) startCountdown();
+    return;
+  }
+  const seg = segs[idx];
+  if (!voiceCache) {
+    const list = window.speechSynthesis.getVoices();
+    if (list.length > 0) voiceCache = pickBestVoice(list);
+  }
+  const u = new SpeechSynthesisUtterance(seg.text);
+  u.lang = 'es-MX';
+  u.rate = TTS_RATE; u.pitch = 1.0; u.volume = 1.0;
+  if (voiceCache) { u.voice = voiceCache; if (voiceCache.lang && voiceCache.lang.indexOf('es') === 0) u.lang = voiceCache.lang; }
+  u.onboundary = (e) => {
+    if (e.name !== 'word') return;
+    const chunk = seg.text.slice(0, e.charIndex + Math.max(e.charLength || 1, 1)).trim();
+    const n = chunk.split(/\s+/).filter(t => t.length > 0).length;
+    clearHighlights();
+    const span = slideWordSpans[Math.min(seg.start + n - 1, slideWordSpans.length - 1)];
+    if (span) { span.classList.add('lit'); span.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  };
+  u.onend = () => { setTimeout(() => speakSegments(segs, idx + 1, token), TTS_PAUSE_MS); };
+  u.onerror = () => { setTimeout(() => speakSegments(segs, idx + 1, token), TTS_PAUSE_MS); };
+  window.speechSynthesis.speak(u);
+}
+
+// ── VOICE LOADER — iOS + Android ──────────────────────────────
+const PREFERRED_VOICES = [
+  'Paulina','Sabina','Mónica','Monica','Jorge','Diego',
+  'español','Español','Google español','Microsoft Sabina',
+  'Microsoft Raul'
+];
+
+function pickBestVoice(list) {
+  for (let n of PREFERRED_VOICES) {
+    const v = list.find(v => v.name.includes(n));
+    if (v) return v;
+  }
+  return list.find(v => v.lang && v.lang.startsWith('es')) || list[0] || null;
+}
+
+function primeVoices() {
+  // Called on first user interaction — iOS requires a user gesture to load voices
+  if (voiceReady) return;
+  try {
+    const u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0; u.rate = 10; u.lang = 'es-MX';
+    window.speechSynthesis.speak(u);
+    window.speechSynthesis.cancel();
+  } catch(e) {}
+
+  const tryLoad = (attempts) => {
+    const list = window.speechSynthesis.getVoices();
+    if (list.length > 0) {
+      voiceCache = pickBestVoice(list);
+      voiceReady = true;
+    } else if (attempts < 20) {
+      setTimeout(() => tryLoad(attempts + 1), 150);
+    }
+  };
+
+  window.speechSynthesis.onvoiceschanged = () => {
+    const list = window.speechSynthesis.getVoices();
+    if (list.length > 0) { voiceCache = pickBestVoice(list); voiceReady = true; }
+  };
+
+  tryLoad(0);
+}
+
+// ── TTS ────────────────────────────────────────────────────────
+function readSlide() {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  clearCountdown();
+  clearHighlights();
+
+  slideWordSpans = getActiveWordSpans();
+  const segs = buildTTSSegments(slideWordSpans);
+  if (!segs.length) return;
+
+  ttsToken++;
+  const token = ttsToken;
+  document.getElementById('tts-btn').classList.add('speaking');
+  speakSegments(segs, 0, token);
+}
+
+
+
+const COUNTDOWN_SECS = 7, CIRC = 94;
+const GUIDE_CUES = [[0.04,8.66],[9.12,29.21],[29.82,71.17],[71.81,104.19],[104.83,128.09],[128.77,148.0],[148.81,160.91],[161.63,187.29],[188.11,200.4],[201.0,219.15],[219.86,232.8],[233.6,248.35],[249.02,265.25],[265.96,291.96],[292.54,299.56],[300.24,304.36],[305.12,309.21],[309.76,315.01],[315.72,318.96],[319.54,325.06],[325.68,326.62]];
+const GUIDE_WORDS = [[[0.04,0.7,"kec"],[1.0,1.3,"field"],[1.36,2.21,"technology"],[2.48,3.32,"mytechpix"],[3.48,3.72,"quick"],[3.8,4.38,"guide"],[4.62,4.76,"what"],[4.82,4.88,"to"],[4.96,5.63,"capture"],[5.84,5.98,"when"],[6.04,6.1,"to"],[6.16,6.56,"capture"],[6.58,6.88,"it"],[7.08,7.24,"how"],[7.28,7.36,"to"],[7.44,7.76,"avoid"],[7.86,8.12,"qa"],[8.24,8.66,"blocks"]],[[9.12,9.46,"section"],[9.58,9.97,"1"],[10.18,10.24,"the"],[10.28,11.17,"foundation"],[11.44,11.52,"the"],[11.68,11.9,"only"],[12.02,12.22,"3"],[12.3,12.56,"things"],[12.58,12.7,"that"],[12.74,13.35,"matter"],[13.64,14.1,"one"],[14.34,14.6,"blue"],[14.7,15.02,"before"],[15.04,15.12,"you"],[15.18,15.75,"clean"],[16.0,16.46,"document"],[16.62,17.08,"everything"],[17.12,17.4,"before"],[17.4,17.5,"you"],[17.54,17.82,"touch"],[17.86,18.25,"it"],[18.52,19.04,"two"],[19.32,19.62,"green"],[19.78,20.06,"after"],[20.1,20.18,"you"],[20.24,20.83,"finish"],[21.04,21.48,"document"],[21.64,22.04,"everything"],[22.2,22.48,"after"],[22.52,22.6,"it"],[22.64,22.72,"is"],[22.78,23.37,"clean"],[23.66,24.23,"three"],[24.54,24.72,"red"],[24.9,25.16,"only"],[25.26,25.34,"if"],[25.38,25.54,"there"],[25.56,25.64,"is"],[25.66,25.68,"a"],[25.74,26.42,"problem"],[26.72,27.04,"missing"],[27.08,27.32,"blue"],[27.44,27.52,"or"],[27.56,27.86,"green"],[27.94,28.16,"means"],[28.18,28.28,"you"],[28.32,28.64,"cannot"],[28.7,28.9,"check"],[29.0,29.21,"out"]],[[29.82,30.16,"section"],[30.24,30.67,"2"],[30.9,31.3,"status"],[31.36,32.0,"codes"],[32.28,32.36,"on"],[32.38,32.46,"the"],[32.5,32.95,"way"],[33.18,33.89,"driving"],[34.12,34.2,"no"],[34.34,34.77,"work"],[34.92,35.0,"no"],[35.14,35.94,"photos"],[36.22,36.62,"arrived"],[36.68,37.35,"onsite"],[37.54,37.62,"you"],[37.66,37.76,"are"],[37.78,38.23,"there"],[38.42,38.5,"do"],[38.58,38.74,"not"],[38.84,39.12,"start"],[39.16,39.69,"yet"],[40.02,40.34,"waiting"],[40.36,40.44,"on"],[40.54,41.22,"access"],[41.44,41.74,"cannot"],[41.8,42.4,"start"],[42.64,42.82,"use"],[42.86,43.54,"comments"],[43.76,44.04,"wide"],[44.08,44.38,"photo"],[44.5,44.58,"if"],[44.64,45.28,"blocked"],[45.56,45.78,"check"],[45.86,46.24,"in"],[46.5,46.72,"work"],[46.78,47.14,"starts"],[47.18,47.64,"here"],[47.86,48.12,"take"],[48.18,48.38,"blue"],[48.42,49.01,"docs"],[49.22,49.46,"call"],[49.56,50.17,"office"],[50.36,50.58,"check"],[50.68,51.08,"out"],[51.3,51.52,"work"],[51.64,51.86,"ends"],[51.92,52.36,"here"],[52.58,52.98,"cleaning"],[53.02,53.45,"done"],[53.64,53.9,"green"],[53.98,54.55,"docs"],[54.78,55.26,"metadata"],[55.32,56.04,"complete"],[56.28,56.48,"check"],[56.54,56.68,"out"],[56.72,56.84,"with"],[56.84,56.92,"the"],[56.94,57.32,"control"],[57.38,57.66,"tower"],[57.72,58.0,"before"],[58.06,58.36,"locking"],[58.36,58.44,"the"],[58.48,59.02,"location"],[59.34,59.42,"and"],[59.48,59.78,"setting"],[59.8,59.86,"the"],[59.9,60.52,"alarm"],[60.84,61.12,"needs"],[61.38,61.64,"sm"],[61.72,62.34,"review"],[62.64,62.9,"after"],[62.94,63.57,"checkout"],[63.76,64.02,"finish"],[64.08,64.34,"getting"],[64.38,64.54,"ready"],[64.62,64.68,"to"],[64.76,64.96,"leave"],[64.98,65.06,"the"],[65.08,65.81,"jobsite"],[65.99,66.13,"then"],[66.21,66.51,"change"],[66.53,66.93,"status"],[66.99,67.17,"from"],[67.49,67.71,"check"],[67.79,67.95,"out"],[68.25,68.33,"to"],[68.41,68.71,"needs"],[68.95,69.19,"sm"],[69.27,69.84,"review"],[70.09,70.41,"qa"],[70.59,70.87,"takes"],[70.95,71.17,"over"]],[[71.81,72.17,"section"],[72.25,72.7,"3"],[72.89,73.23,"before"],[73.29,73.94,"cleaning"],[74.19,74.71,"blue"],[74.99,75.35,"kitchen"],[75.43,75.53,"and"],[75.57,76.03,"hood"],[76.27,76.45,"hood"],[76.51,76.99,"walkthrough"],[77.01,77.58,"video"],[77.87,78.23,"pilot"],[78.29,78.55,"lights"],[78.61,79.12,"video"],[79.37,79.73,"flames"],[79.81,80.05,"must"],[80.11,80.17,"be"],[80.23,80.89,"visible"],[81.17,81.47,"fire"],[81.51,81.69,"pull"],[81.77,82.13,"station"],[82.19,82.68,"tag"],[82.87,83.13,"front"],[83.21,83.31,"and"],[83.35,83.87,"back"],[84.13,84.41,"wide"],[84.43,84.61,"view"],[84.71,84.79,"of"],[84.83,85.41,"appliances"],[85.51,85.71,"under"],[85.73,85.81,"the"],[85.85,86.37,"hood"],[86.67,86.91,"slow"],[87.01,87.49,"appliance"],[87.53,87.75,"line"],[87.77,88.28,"video"],[88.55,88.77,"left"],[88.79,88.85,"to"],[88.93,89.36,"right"],[89.53,89.77,"about"],[89.87,90.15,"5"],[90.19,90.39,"feet"],[90.45,91.01,"back"],[91.31,91.49,"hood"],[91.55,91.69,"with"],[91.71,92.09,"filters"],[92.17,92.58,"in"],[92.85,93.03,"hood"],[93.09,93.23,"with"],[93.25,93.59,"filters"],[93.71,94.19,"out"],[94.45,94.69,"upper"],[94.77,94.87,"and"],[94.93,95.15,"lower"],[95.17,95.8,"tracks"],[96.01,96.39,"plenum"],[96.47,96.57,"and"],[96.59,97.07,"detection"],[97.11,97.58,"line"],[97.77,98.05,"wide"],[98.09,98.58,"shot"],[98.83,99.47,"backsplash"],[99.53,99.63,"and"],[99.65,99.99,"behind"],[100.03,100.92,"appliances"],[101.17,101.39,"work"],[101.49,101.79,"area"],[101.89,101.97,"and"],[101.99,102.37,"return"],[102.43,103.0,"vents"],[103.25,103.39,"all"],[103.47,103.73,"duct"],[103.81,104.19,"collars"]],[[104.83,105.37,"blue"],[105.65,105.93,"duct"],[105.99,106.09,"and"],[106.17,106.53,"access"],[106.59,107.22,"panels"],[107.47,107.85,"overall"],[107.93,108.17,"duct"],[108.23,108.65,"view"],[108.89,109.41,"location"],[109.47,109.55,"of"],[109.65,109.85,"each"],[109.89,110.46,"panel"],[110.71,111.03,"panel"],[111.15,111.54,"on"],[111.79,112.09,"sticker"],[112.17,112.41,"must"],[112.47,112.53,"be"],[112.59,113.2,"visible"],[113.43,113.71,"panel"],[113.83,114.26,"off"],[114.51,114.93,"outside"],[114.93,115.01,"the"],[115.05,115.53,"hole"],[115.75,115.91,"view"],[115.99,116.27,"toward"],[116.31,116.39,"the"],[116.43,116.9,"hood"],[117.17,117.33,"view"],[117.39,117.65,"toward"],[117.69,117.77,"the"],[117.81,118.21,"vertical"],[118.27,118.85,"duct"],[119.13,119.39,"fire"],[119.41,119.61,"wrap"],[119.69,120.42,"condition"],[120.69,120.77,"no"],[120.89,121.17,"panel"],[121.21,121.87,"exists"],[122.03,122.29,"mark"],[122.55,122.57,"n"],[122.71,122.98,"a"],[123.23,123.39,"not"],[123.45,124.09,"present"],[124.33,124.55,"never"],[124.61,124.81,"leave"],[124.85,125.36,"blank"],[125.55,125.77,"never"],[125.81,126.33,"guess"],[126.55,126.69,"this"],[126.73,126.79,"is"],[126.83,126.91,"the"],[126.93,127.15,"most"],[127.31,127.71,"audited"],[127.87,128.09,"item"]],[[128.77,129.32,"blue"],[129.61,130.03,"rooftop"],[130.11,130.21,"and"],[130.25,130.82,"fan"],[131.11,131.37,"fan"],[131.45,131.55,"and"],[131.61,131.89,"switch"],[131.93,132.56,"position"],[132.79,132.99,"fan"],[133.05,133.68,"blades"],[133.93,134.05,"all"],[134.13,134.74,"sides"],[134.95,135.17,"fan"],[135.31,135.73,"off"],[135.99,136.19,"fan"],[136.27,136.51,"running"],[136.53,137.07,"video"],[137.35,137.57,"fan"],[137.65,137.85,"bowl"],[137.91,138.01,"and"],[138.05,138.72,"reservoir"],[138.93,139.21,"catch"],[139.27,139.45,"pan"],[139.51,139.99,"video"],[140.23,140.49,"drain"],[140.55,141.12,"path"],[141.35,141.57,"within"],[141.61,141.85,"about"],[141.95,142.25,"5"],[142.31,142.84,"feet"],[143.13,143.55,"vertical"],[143.61,143.87,"duct"],[143.91,144.42,"down"],[144.67,144.95,"wide"],[144.99,145.19,"roof"],[145.31,145.83,"area"],[146.05,147.09,"360"],[147.11,147.39,"degree"],[147.45,147.65,"fan"],[147.73,148.0,"video"]],[[148.81,149.15,"section"],[149.25,149.72,"4"],[149.97,150.21,"after"],[150.25,150.85,"cleaning"],[151.05,151.65,"green"],[151.93,152.19,"same"],[152.27,152.89,"areas"],[153.11,153.37,"clean"],[153.45,154.24,"condition"],[154.55,154.97,"everything"],[154.99,155.07,"you"],[155.13,155.31,"shot"],[155.37,155.45,"in"],[155.53,155.79,"blue"],[156.03,156.27,"must"],[156.31,156.37,"be"],[156.45,156.93,"verified"],[156.95,157.01,"in"],[157.09,157.66,"green"],[157.95,158.03,"if"],[158.11,158.41,"qa"],[158.55,158.85,"cannot"],[158.95,159.09,"see"],[159.11,159.19,"it"],[159.25,159.79,"clean"],[159.99,160.07,"it"],[160.13,160.29,"does"],[160.37,160.51,"not"],[160.57,160.91,"count"]],[[161.63,161.95,"section"],[162.05,162.63,"5"],[162.85,162.99,"how"],[163.05,163.13,"to"],[163.21,163.41,"shoot"],[163.47,164.03,"video"],[164.33,164.49,"this"],[164.57,164.95,"prevents"],[165.11,165.38,"80"],[165.41,165.75,"percent"],[165.77,165.85,"of"],[165.91,166.17,"qa"],[166.29,166.97,"fails"],[167.25,167.51,"stand"],[167.61,167.83,"far"],[167.85,168.07,"enough"],[168.15,168.37,"back"],[168.45,168.51,"to"],[168.57,168.71,"see"],[168.73,168.81,"the"],[168.87,169.11,"whole"],[169.21,169.77,"area"],[170.03,170.25,"move"],[170.35,170.65,"slow"],[170.77,170.87,"and"],[170.93,171.55,"steady"],[171.89,172.03,"one"],[172.07,172.61,"continuous"],[172.67,173.15,"shot"],[173.37,173.43,"do"],[173.53,173.71,"not"],[173.79,174.07,"stop"],[174.15,174.25,"and"],[174.29,175.08,"restart"],[175.35,175.65,"pause"],[175.71,175.89,"2"],[175.95,176.01,"to"],[176.07,176.25,"3"],[176.31,176.69,"seconds"],[176.75,176.83,"on"],[176.87,177.33,"important"],[177.41,178.05,"areas"],[178.31,178.53,"never"],[178.59,178.67,"do"],[178.77,179.25,"this"],[179.47,179.53,"do"],[179.63,179.81,"not"],[179.89,180.11,"zoom"],[180.15,180.49,"in"],[180.71,180.77,"do"],[180.87,181.03,"not"],[181.09,181.31,"jump"],[181.33,181.63,"between"],[181.71,182.39,"sections"],[182.59,182.67,"do"],[182.77,182.93,"not"],[183.01,183.21,"shoot"],[183.29,183.45,"too"],[183.51,184.15,"close"],[184.37,184.45,"if"],[184.49,184.57,"you"],[184.61,184.93,"cannot"],[184.99,185.11,"see"],[185.15,185.23,"the"],[185.29,185.47,"full"],[185.51,186.21,"component"],[186.37,186.47,"you"],[186.51,186.61,"are"],[186.65,186.83,"too"],[186.89,187.29,"close"]],[[188.11,188.39,"grease"],[188.41,189.11,"removal"],[189.39,189.61,"heavy"],[189.69,189.97,"grease"],[190.01,190.35,"buildup"],[190.45,190.73,"breaks"],[190.79,190.99,"down"],[191.03,191.15,"with"],[191.19,191.35,"hot"],[191.43,191.75,"water"],[191.81,191.91,"and"],[191.93,192.72,"degreaser"],[192.99,193.27,"cold"],[193.33,193.63,"water"],[193.67,193.89,"makes"],[193.95,194.21,"grease"],[194.23,194.75,"solidify"],[194.83,194.93,"and"],[194.99,195.98,"readhere"],[196.03,196.35,"apply"],[196.41,197.09,"degreaser"],[197.32,197.46,"let"],[197.5,197.58,"it"],[197.62,198.11,"dwell"],[198.32,198.44,"then"],[198.52,198.8,"rinse"],[198.82,198.94,"with"],[199.0,199.16,"hot"],[199.24,199.54,"water"],[199.56,199.7,"from"],[199.72,199.8,"the"],[199.84,200.06,"top"],[200.14,200.4,"down"]],[[201.0,201.34,"section"],[201.44,201.91,"6"],[202.14,202.62,"red"],[202.84,202.98,"when"],[203.04,203.1,"to"],[203.22,203.38,"use"],[203.42,203.79,"it"],[204.04,204.46,"problems"],[204.58,205.11,"only"],[205.38,205.48,"you"],[205.5,205.66,"could"],[205.72,205.86,"not"],[205.94,206.16,"reach"],[206.22,206.8,"something"],[207.0,207.3,"something"],[207.32,207.4,"is"],[207.46,208.11,"damaged"],[208.3,208.6,"something"],[208.62,208.7,"is"],[208.78,209.39,"missing"],[209.64,209.92,"fire"],[209.94,210.14,"wrap"],[210.24,210.42,"looks"],[210.48,211.34,"compromised"],[211.56,211.92,"access"],[211.96,212.04,"is"],[212.1,212.74,"blocked"],[213.02,213.18,"red"],[213.3,213.54,"must"],[213.6,213.84,"match"],[214.0,214.16,"one"],[214.22,214.4,"real"],[214.5,215.08,"issue"],[215.34,215.5,"red"],[215.6,215.84,"must"],[215.88,215.94,"be"],[216.02,216.6,"clear"],[216.88,217.06,"red"],[217.16,217.24,"is"],[217.3,217.48,"not"],[217.52,217.54,"a"],[217.58,218.2,"failure"],[218.4,218.74,"hiding"],[218.76,218.84,"it"],[218.94,219.15,"is"]],[[219.86,220.2,"section"],[220.32,220.69,"8"],[220.86,221.53,"checkout"],[221.76,222.28,"metadata"],[222.34,223.06,"required"],[223.3,223.6,"system"],[223.68,224.21,"type"],[224.42,224.66,"duct"],[224.76,225.65,"orientation"],[225.86,226.06,"fan"],[226.14,226.66,"type"],[226.86,227.61,"stories"],[227.86,228.2,"access"],[228.26,228.54,"panel"],[228.58,229.28,"status"],[229.52,229.8,"missing"],[229.84,230.34,"metadata"],[230.44,230.66,"means"],[230.74,231.04,"blocked"],[231.14,231.78,"checkout"],[231.98,232.06,"no"],[232.14,232.8,"exceptions"]],[[233.6,233.94,"access"],[234.0,234.28,"panel"],[234.34,234.84,"rule"],[235.1,235.16,"if"],[235.22,235.24,"a"],[235.3,235.6,"panel"],[235.64,235.8,"does"],[235.84,236.0,"not"],[236.06,236.4,"exist"],[236.42,236.48,"at"],[236.5,236.58,"the"],[236.64,237.14,"site"],[237.34,237.56,"mark"],[237.6,237.72,"it"],[238.04,238.06,"n"],[238.26,238.56,"a"],[238.84,239.02,"not"],[239.08,239.77,"present"],[240.06,240.28,"never"],[240.34,240.52,"leave"],[240.52,240.6,"the"],[240.64,240.88,"field"],[240.94,241.49,"blank"],[241.74,241.96,"never"],[242.02,242.57,"guess"],[242.82,242.84,"a"],[242.9,243.2,"blank"],[243.32,243.4,"or"],[243.46,243.74,"guessed"],[243.84,244.12,"entry"],[244.24,244.32,"is"],[244.36,244.42,"an"],[244.54,245.06,"automatic"],[245.12,245.38,"qa"],[245.52,246.09,"flag"],[246.36,246.48,"this"],[246.52,246.6,"is"],[246.64,246.7,"the"],[246.74,246.96,"most"],[247.1,247.48,"audited"],[247.66,247.84,"item"],[247.9,247.96,"on"],[247.98,248.06,"the"],[248.1,248.35,"job"]],[[249.02,249.3,"common"],[249.36,249.6,"qa"],[249.72,250.33,"blocks"],[250.56,250.86,"missing"],[250.88,251.22,"pilot"],[251.26,251.48,"lights"],[251.52,252.08,"video"],[252.38,252.72,"filters"],[252.84,253.19,"out"],[253.36,253.68,"plenum"],[253.72,253.88,"not"],[253.96,254.47,"shown"],[254.7,255.18,"appliance"],[255.22,255.48,"video"],[255.62,255.82,"too"],[255.9,256.52,"close"],[256.72,257.04,"panel"],[257.1,257.26,"not"],[257.34,257.62,"shown"],[257.78,257.86,"or"],[257.92,258.24,"marked"],[258.52,258.54,"n"],[258.7,259.12,"a"],[259.52,259.68,"red"],[259.8,260.08,"issue"],[260.18,260.64,"uploaded"],[260.68,260.82,"with"],[260.88,260.98,"no"],[261.16,262.12,"explanation"],[262.4,262.84,"photos"],[262.9,262.96,"in"],[262.98,263.06,"the"],[263.1,263.34,"wrong"],[263.4,263.96,"bucket"],[264.18,264.58,"before"],[264.7,264.78,"or"],[264.9,265.25,"after"]],[[265.96,266.32,"before"],[266.36,266.46,"you"],[266.52,267.07,"leave"],[267.3,267.42,"did"],[267.52,267.54,"i"],[267.62,267.84,"shoot"],[267.94,268.18,"blue"],[268.24,268.54,"before"],[268.58,269.21,"cleaning"],[269.44,269.54,"did"],[269.64,269.66,"i"],[269.72,270.2,"verify"],[270.36,270.58,"every"],[270.68,270.9,"blue"],[271.02,271.3,"area"],[271.42,271.5,"in"],[271.56,272.14,"green"],[272.42,272.52,"did"],[272.62,272.64,"i"],[272.7,272.96,"mark"],[273.1,273.46,"access"],[273.54,273.84,"limits"],[273.9,274.52,"clearly"],[274.78,274.9,"did"],[274.98,275.0,"i"],[275.04,275.42,"complete"],[275.6,275.74,"all"],[275.82,276.63,"metadata"],[276.9,277.02,"did"],[277.1,277.12,"i"],[277.22,277.38,"use"],[277.48,277.68,"red"],[277.82,278.08,"only"],[278.16,278.32,"where"],[278.36,278.98,"needed"],[279.24,279.36,"did"],[279.46,279.48,"i"],[279.54,279.76,"check"],[279.84,279.98,"out"],[280.0,280.12,"with"],[280.12,280.18,"the"],[280.22,280.6,"control"],[280.68,280.94,"tower"],[281.0,281.28,"before"],[281.34,281.66,"locking"],[281.68,281.76,"the"],[281.78,282.3,"location"],[282.62,282.72,"and"],[282.8,283.1,"setting"],[283.12,283.18,"the"],[283.22,283.83,"alarm"],[284.12,284.24,"did"],[284.32,284.34,"i"],[284.4,284.72,"change"],[284.76,285.18,"status"],[285.24,285.38,"from"],[285.46,285.7,"check"],[285.78,285.94,"out"],[286.28,286.36,"to"],[286.46,286.76,"needs"],[287.02,287.22,"sm"],[287.28,287.58,"review"],[287.8,288.12,"before"],[288.14,288.83,"leaving"],[289.16,289.3,"all"],[289.38,289.64,"yes"],[289.74,289.96,"means"],[289.98,290.08,"you"],[290.1,290.2,"are"],[290.24,290.52,"done"],[290.84,290.94,"and"],[290.98,291.4,"checkout"],[291.44,291.54,"will"],[291.58,291.96,"pass"]],[[292.54,292.62,"the"],[292.68,293.0,"final"],[293.08,293.56,"rule"],[293.8,293.9,"if"],[293.98,294.3,"qa"],[294.46,294.6,"can"],[294.68,295.14,"recreate"],[295.16,295.22,"the"],[295.26,295.5,"job"],[295.6,295.84,"using"],[295.88,296.04,"your"],[296.1,296.52,"photos"],[296.56,296.64,"and"],[296.66,297.26,"videos"],[297.42,297.52,"you"],[297.56,297.68,"did"],[297.72,297.8,"it"],[297.86,298.39,"right"],[298.66,298.86,"that"],[298.9,298.98,"is"],[299.02,299.1,"the"],[299.14,299.56,"standard"]],[[300.24,300.82,"quiz"],[301.06,301.44,"question"],[301.58,302.02,"1"],[302.26,302.28,"a"],[302.38,302.7,"photo"],[302.88,303.3,"outlined"],[303.32,303.38,"in"],[303.48,303.72,"red"],[303.9,304.14,"means"],[304.2,304.36,"what"]],[[305.12,305.63,"quiz"],[305.8,306.2,"question"],[306.28,306.78,"2"],[307.08,307.24,"what"],[307.3,307.58,"works"],[307.64,307.94,"best"],[308.02,308.1,"on"],[308.18,308.4,"heavy"],[308.48,308.76,"grease"],[308.78,309.21,"buildup"]],[[309.76,310.26,"quiz"],[310.44,310.82,"question"],[310.9,311.43,"3"],[311.7,311.84,"there"],[311.86,311.92,"is"],[312.02,312.1,"no"],[312.32,312.66,"access"],[312.72,313.02,"panel"],[313.1,313.34,"3"],[313.48,313.56,"at"],[313.58,313.66,"the"],[313.72,314.26,"site"],[314.48,314.62,"what"],[314.66,314.72,"do"],[314.76,314.84,"you"],[314.9,315.01,"do"]],[[315.72,316.22,"quiz"],[316.38,316.76,"question"],[316.86,317.35,"4"],[317.62,317.76,"when"],[317.76,317.84,"are"],[317.84,317.94,"you"],[318.0,318.26,"done"],[318.34,318.42,"at"],[318.48,318.96,"checkout"]],[[319.54,320.02,"quiz"],[320.18,320.54,"question"],[320.6,321.21,"5"],[321.46,321.7,"after"],[321.74,322.06,"checking"],[322.12,322.49,"out"],[322.7,322.86,"what"],[322.92,323.32,"status"],[323.36,323.4,"do"],[323.44,323.54,"you"],[323.6,323.78,"set"],[323.84,324.12,"before"],[324.14,324.42,"leaving"],[324.44,324.52,"the"],[324.54,325.06,"jobsite"]],[[325.68,325.9,"quiz"],[325.96,326.62,"results"]]];
+let guideRaf = 0;
+let audioUnlocked = false;
+let armRetry = false;
+
+function setHearStatus(msg) {
+  let el = document.getElementById('hear-status');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'hear-status';
+    el.style.cssText = 'position:fixed;top:58px;left:0;right:0;text-align:center;font-size:11px;letter-spacing:.4px;color:#8fd;z-index:180;pointer-events:none;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg || '';
+}
+
+function armAudio(a) {
+  a.muted = false;
+  a.volume = 1;
+  a.playsInline = true;
+  a.setAttribute('playsinline', '');
+}
+
+// No muted unlock. A muted play-then-pause was winning the race and leaving the guide silent.
+function unlockGuideAudio() {
+  const a = document.getElementById('guide-voice');
+  if (!a) return;
+  armAudio(a);
+}
+
+function playGuideSlide(){
+  const a = document.getElementById('guide-voice');
+  const cue = GUIDE_CUES[cur];
+  if(!a || !cue) return;
+  clearCountdown();
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  clearHighlights();
+  const start = () => {
+    armAudio(a);
+    try { if (a.readyState >= 1) a.currentTime = cue[0]; } catch(e) {}
+    const p = a.play();
+    if (p && p.then) {
+      p.then(() => { audioUnlocked = true; armRetry = false; setHearStatus('Reproduciendo'); }).catch((err) => { armRetry = true; setHearStatus('Toca Escuchar de nuevo'); });
+    } else setHearStatus('Reproduciendo');
+    let spanPtr = 0;
+    const norm = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+    const tick = () => {
+      if(!ttsOn) return;
+      const spans = getActiveWordSpans();
+      const words = GUIDE_WORDS[cur] || [];
+      const t = a.currentTime;
+      const spoken = words.find(w => t >= w[0] && t < w[1] + 0.04);
+      if(spoken){
+        const key = spoken[2];
+        for(let i = spanPtr; i < spans.length; i++){
+          if(norm(spans[i].textContent) === key){ spanPtr = i; break; }
+        }
+        clearHighlights();
+        if(spans[spanPtr] && norm(spans[spanPtr].textContent) === key){
+          spans[spanPtr].classList.add('lit');
+          spans[spanPtr].scrollIntoView({block:'nearest'});
+        }
+      }
+      if(a.currentTime >= cue[1]-0.08){
+        a.pause();
+        clearHighlights();
+        if(autoOn && cur < TOTAL-1 && !isQuizLocked()) startCountdown();
+        return;
+      }
+      guideRaf = requestAnimationFrame(tick);
+    };
+    cancelAnimationFrame(guideRaf);
+    guideRaf = requestAnimationFrame(tick);
+  };
+  // Call play() on this turn. Waiting for metadata drops the iOS gesture and the first Start dies.
+  start();
+  if (a.readyState < 1) {
+    a.addEventListener('loadedmetadata', () => {
+      if (!ttsOn) return;
+      try { a.currentTime = GUIDE_CUES[cur][0]; } catch(e) {}
+      armAudio(a);
+      a.play().then(() => { audioUnlocked = true; armRetry = false; setHearStatus('Reproduciendo'); }).catch(() => { armRetry = true; setHearStatus('Toca Escuchar de nuevo'); });
+    }, {once:true});
+  }
+}
+function toggleTTS() {
+  const voice = document.getElementById('guide-voice');
+  const btn = document.getElementById('tts-btn');
+  ttsOn = !ttsOn;
+  if (ttsOn) {
+    // Spanish version: narration is on-device Spanish speech synthesis.
+    // The bundled kec-mytechpix-voice.mp3 is the English recording, so it stays paused.
+    if (voice) voice.pause();
+    if(window.speechSynthesis) window.speechSynthesis.cancel();
+    btn.textContent = '🔇 Parar';
+    btn.classList.add('speaking');
+    primeVoices();
+    readSlide();
+    return;
+  }
+  cancelAnimationFrame(guideRaf);
+  if (voice) voice.pause();
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  btn.textContent = '🎧 Escuchar · ▶️ Reproducir'; setHearStatus('');
+  btn.classList.remove('speaking');
+  clearCountdown(); clearHighlights();
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  const btn = document.getElementById('auto-btn');
+  btn.textContent = autoOn ? '⏭ Auto: Sí' : '⏭ Auto: No';
+  btn.classList.toggle('on', autoOn);
+  if (!autoOn) clearCountdown();
+}
+
+// ── COUNTDOWN ──────────────────────────────────────────────────
+
+function startCountdown() {
+  clearCountdown();
+  if (cur >= TOTAL - 1) return;
+  if (isQuizLocked()) return;
+  const wrap = document.getElementById('countdown-wrap');
+  const circle = document.getElementById('countdown-circle');
+  const num = document.getElementById('countdown-num');
+  circle.style.strokeDasharray = CIRC; circle.style.strokeDashoffset = CIRC;
+  wrap.classList.add('visible'); num.textContent = COUNTDOWN_SECS;
+  let elapsed = 0;
+  countdownInterval = setInterval(() => {
+    elapsed += 50;
+    circle.style.strokeDashoffset = CIRC - (CIRC * elapsed / (COUNTDOWN_SECS * 1000));
+    const rem = Math.ceil(COUNTDOWN_SECS - elapsed / 1000);
+    num.textContent = rem > 0 ? rem : '';
+    if (elapsed >= COUNTDOWN_SECS * 1000) { clearCountdown(); nextSlide(); }
+  }, 50);
+}
+
+function clearCountdown() {
+  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+  document.getElementById('countdown-wrap').classList.remove('visible');
+  const c = document.getElementById('countdown-circle'); if (c) c.style.strokeDashoffset = CIRC;
+  const n = document.getElementById('countdown-num'); if (n) n.textContent = COUNTDOWN_SECS;
+}
+
+// ── SLIDE TRANSITIONS ──────────────────────────────────────────
+const ANIM_MS = 400;
+
+function goTo(index) {
+  if (index < 0 || index >= TOTAL || index === cur || isAnimating) return;
+  unlockGuideAudio();
+  primeVoices();
+  isAnimating = true;
+  clearCountdown(); clearHighlights(); window.speechSynthesis.cancel();
+  const fromEl = document.querySelector('.slide.is-active');
+  const toEl = document.querySelector(`.slide[data-index="${index}"]`);
+  if (!fromEl || !toEl) { isAnimating = false; return; }
+  if (index === RESULTS_INDEX) renderResults();
+  const dir = index > cur ? 'right' : 'left';
+  toEl.className = toEl.className.replace(/\b(is-active|enter-from-right|enter-from-left|exit-to-left|exit-to-right|animating)\b/g,'').trim();
+  toEl.classList.add(dir === 'right' ? 'enter-from-right' : 'enter-from-left');
+  void toEl.offsetWidth;
+  fromEl.classList.remove('is-active');
+  fromEl.classList.add(dir === 'right' ? 'exit-to-left' : 'exit-to-right');
+  requestAnimationFrame(() => requestAnimationFrame(() => { toEl.classList.add('animating'); fromEl.classList.add('animating'); }));
+  setTimeout(() => {
+    fromEl.classList.remove('exit-to-left','exit-to-right','animating'); fromEl.style.cssText = '';
+    toEl.classList.remove('enter-from-right','enter-from-left','animating'); toEl.classList.add('is-active');
+    cur = index; isAnimating = false; updateUI();
+    if (ttsOn) readSlide();
+  }, ANIM_MS);
+  cur = index; updateUI();
+}
+
+function nextSlide() { if (isQuizLocked()) return; goTo(cur + 1); }
+function prevSlide() { goTo(cur - 1); }
+function toggleCheck(el) { el.classList.toggle('checked'); }
+
+// ── QUIZ ───────────────────────────────────────────────────────
+function isQuizLocked() {
+  const active = document.querySelector(`.slide[data-index="${cur}"]`);
+  return !!(active && active.dataset.quiz !== undefined && quizState[+active.dataset.quiz] === undefined);
+}
+
+function answerQuiz(el) {
+  const slide = el.closest('.slide');
+  const qi = +slide.dataset.quiz;
+  if (quizState[qi] !== undefined) return;
+  const correct = el.dataset.correct === '1';
+  quizState[qi] = correct;
+  el.classList.add(correct ? 'correct' : 'wrong');
+  slide.querySelectorAll('.quiz-option').forEach(b => {
+    b.disabled = true;
+    if (b.dataset.correct === '1') b.classList.add('correct');
+  });
+  const fb = slide.querySelector('.quiz-feedback');
+  fb.textContent = correct ? '✓ Correcto' : '✗ Casi. La respuesta correcta está marcada en verde.';
+  fb.className = 'quiz-feedback ' + (correct ? 'good' : 'bad');
+  updateUI();
+  if (autoOn && !ttsOn && !window.speechSynthesis.speaking) startCountdown();
+}
+
+function renderResults() {
+  const el = document.getElementById('results-content');
+  const score = quizState.filter(v => v === true).length;
+  if (score >= PASS_SCORE) {
+    el.innerHTML =
+      '<svg id="pass-mark" viewBox="0 0 120 120">' +
+        '<circle cx="60" cy="60" r="48"/>' +
+        '<path d="M38 62 L54 78 L84 46"/>' +
+      '</svg>' +
+      '<div style="font-size:36px;font-weight:900;color:#22bb55;margin-bottom:6px;">APROBADO</div>' +
+      '<div style="font-size:16px;color:#aaa;">Puntaje: <strong style="color:#fff;">' + score + ' / ' + QUIZ_COUNT + '</strong></div>' +
+      '<div style="font-size:13px;color:#556a85;text-align:center;margin-top:14px;line-height:1.7;">Conoces el estándar.<br>Haz la salida con la torre de control y luego pon Revisión del SM (Needs SM Review).</div>';
+    launchConfetti();
+  } else {
+    const missed = QUIZ_TOPICS.filter((t, i) => quizState[i] !== true);
+    el.innerHTML =
+      '<div style="font-size:36px;font-weight:900;color:#ffaa00;margin-bottom:6px;">TODAVÍA NO</div>' +
+      '<div style="font-size:16px;color:#aaa;margin-bottom:14px;">Puntaje: <strong style="color:#fff;">' + score + ' / ' + QUIZ_COUNT + '</strong> · Necesitas ' + PASS_SCORE + ' para aprobar</div>' +
+      '<div style="font-size:11px;color:#666;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Repasa estos temas</div>' +
+      '<ul class="slide-list" style="max-width:420px;">' + missed.map(t => '<li>' + t + '</li>').join('') + '</ul>' +
+      '<button class="start-btn" style="margin-top:22px;font-size:15px;padding:14px 40px;" onclick="retryQuiz()">↻ Repasar y reintentar</button>';
+  }
+}
+
+function launchConfetti() {
+  const colors = ['#00cc66', '#0088ff', '#ffaa00', '#ff4477', '#77bbff'];
+  for (let i = 0; i < 40; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + '%';
+    c.style.background = colors[i % colors.length];
+    c.style.animationDuration = (2 + Math.random() * 2) + 's';
+    c.style.animationDelay = (Math.random() * 0.8) + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 5500);
+  }
+}
+
+function retryQuiz() {
+  quizState = new Array(QUIZ_COUNT);
+  document.querySelectorAll('.quiz-option').forEach(b => { b.disabled = false; b.classList.remove('correct', 'wrong'); });
+  document.querySelectorAll('.quiz-feedback').forEach(f => { f.textContent = ''; f.className = 'quiz-feedback'; });
+  goTo(FIRST_QUIZ_INDEX);
+}
+
+function updateUI() {
+  document.getElementById('progress-bar').style.width = (cur / (TOTAL - 1) * 100) + '%';
+  document.getElementById('slide-counter').textContent = cur === 0 ? '' : cur + ' / ' + (TOTAL - 1);
+  document.getElementById('prev-btn').disabled = cur === 0;
+  const nb = document.getElementById('next-btn');
+  nb.textContent = cur === TOTAL - 1 ? '✓ Listo' : 'Siguiente →';
+  nb.disabled = cur === TOTAL - 1 || isQuizLocked();
+}
+
+// ── SWIPE + KEYBOARD ───────────────────────────────────────────
+let tx = 0;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+document.addEventListener('touchend', e => {
+  if (isAnimating) return;
+  const diff = tx - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 45) diff > 0 ? nextSlide() : prevSlide();
+}, { passive: true });
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') nextSlide();
+  if (e.key === 'ArrowLeft') prevSlide();
+});
+
+initAllSlides();
+updateUI();
+</script>
+</body>
+</html>
